@@ -354,6 +354,7 @@ sub fill {
     my $from = $opts{PACKAGE} || caller;
     my $name;
     my $eval;
+    my @namespaces;
 
     no strict;
 
@@ -375,6 +376,7 @@ sub fill {
             print STDERR "Exporting to ${name}::${key}: $val\n";
         }
         $ {"${name}::${key}"} = $val;
+        push @namespaces, qq{${name}::${key}};
     }
 
     ## dynamically create handler for buffered or unbuffered mode
@@ -386,7 +388,23 @@ sub fill {
     }
 
     ##
+    $self->{namespaces} = \@namespaces;
     $eval->(qq{ undef \$_OBUFFER; $self->{buff}; \$_OBUFFER; });
+}
+
+=item $tmpl->reset;
+
+Reset remote $ {"$namespaces"} which is nessisary if you are passing
+conditionally defined keys to fill.
+
+=cut
+sub reset {
+    my $self = shift;
+    no strict;
+
+    for my $namespace (@{$self->{namespaces}}) {
+        $ {"$namespace"} = undef;
+    }
 }
 
 =item $text = $tmpl->include($file, \%vars, @args);

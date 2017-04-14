@@ -6,42 +6,26 @@ use warnings;
 use Test::More;
 use Text::ScriptTemplate;
 
-BEGIN { plan tests => 5 };
+BEGIN { plan tests => 3 };
 
 my $tmpl;
 
 ok($tmpl = Text::ScriptTemplate->new);
 
 my $condition = 1;
-my $reset = 1;
 
-my $out = &test($condition, $reset);
+my $out = &test($condition);
 
 cmp_ok( $out, 'eq', 'testing with condition', 'conditional include' );
 
 undef $condition;
-$reset = 1;
 
-$out = &test($condition, $reset);
+$out = &test($condition);
 
-cmp_ok( $out, 'eq', 'testing', "previous reset with no conditional include" );
-
-$condition = 1;
-undef $reset;
-
-$out = &test($condition, $reset);
-
-cmp_ok( $out, 'eq', 'testing with condition' ,"no conditional include with previous reset" );
-
-undef $condition;
-
-$out = &test($condition, $reset);
-
-cmp_ok( $out, 'eq', 'testing with condition' ,"no conditional include no previous reset" );
+cmp_ok( $out, 'eq', 'testing', "no conditional include" );
 
 sub test {
     my $condition = shift;
-    my $reset = shift;
     my %data = ( 
       'foo' => {'value' => 'with condition'}
     ); 
@@ -52,7 +36,6 @@ sub test {
     $tmpl->setq(%data);
     $tmpl->load('t/60reset.sub');
     my $fill =  $tmpl->fill;
-    $tmpl->reset if $reset;
     chomp($fill);
     return $fill;
 }

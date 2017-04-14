@@ -354,7 +354,7 @@ sub fill {
     my $from = $opts{PACKAGE} || caller;
     my $name;
     my $eval;
-    my @namespaces;
+    my @state;
 
     no strict;
 
@@ -371,12 +371,14 @@ sub fill {
     }
 
     ## export stored data to target namespace
+    my $namespace;
     while (my($key, $val) = each %{$self->{hash}}) {
         if ($DEBUG) {
             print STDERR "Exporting to ${name}::${key}: $val\n";
         }
-        $ {"${name}::${key}"} = $val;
-        push @namespaces, qq{${name}::${key}};
+	    $namespace = qq{${name}::${key}};
+        $ {"$namespace"} = $val;
+        push @state, $namespace;
     }
 
     ## dynamically create handler for buffered or unbuffered mode
@@ -388,23 +390,8 @@ sub fill {
     }
 
     ##
-    $self->{namespaces} = \@namespaces;
+    $self->{state} = \@state;
     $eval->(qq{ undef \$_OBUFFER; $self->{buff}; \$_OBUFFER; });
-}
-
-=item $tmpl->reset;
-
-Reset remote $ {"$namespaces"} which is nessisary if you are passing
-conditionally defined keys to fill.
-
-=cut
-sub reset {
-    my $self = shift;
-    no strict;
-
-    for my $namespace (@{$self->{namespaces}}) {
-        $ {"$namespace"} = undef;
-    }
 }
 
 =item $text = $tmpl->include($file, \%vars, @args);
@@ -433,6 +420,20 @@ sub include {
 }
 
 =back
+
+=item DESTROY
+
+Reset state.
+
+=cut
+sub DESTROY {
+    my $self = shift;
+    no strict;
+
+    for my $namespace (@{$self->{state}}) {
+        $ {"$namespace"} = undef;
+    }
+}
 
 =head1 TEMPLATE INTERNAL
 

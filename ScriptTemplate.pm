@@ -197,7 +197,7 @@ use strict;
 use vars qw($DEBUG $VERSION);
 
 $DEBUG   = 0;
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 =item $tmpl = new Text::ScriptTemplate;
 
@@ -371,13 +371,12 @@ sub fill {
     }
 
     ## export stored data to target namespace
-    my $namespace;
     while (my($key, $val) = each %{$self->{hash}}) {
         if ($DEBUG) {
             print STDERR "Exporting to ${name}::${key}: $val\n";
         }
-	    $namespace = qq{${name}::${key}};
-        $ {"$namespace"} = $val;
+        my $namespace = $name . '::' . $key;
+        $$namespace = $val;
         push @state, $namespace;
     }
 
@@ -428,10 +427,9 @@ Reset state.
 =cut
 sub DESTROY {
     my $self = shift;
-    no strict;
-
+    no strict 'refs';
     for my $namespace (@{$self->{state}}) {
-        $ {"$namespace"} = undef;
+        undef $$namespace;
     }
 }
 

@@ -197,7 +197,7 @@ use strict;
 use vars qw($DEBUG $VERSION);
 
 $DEBUG   = 0;
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 =item $tmpl = new Text::ScriptTemplate;
 
@@ -354,6 +354,7 @@ sub fill {
     my $from = $opts{PACKAGE} || caller;
     my $name;
     my $eval;
+    my @state;
 
     no strict;
 
@@ -374,7 +375,9 @@ sub fill {
         if ($DEBUG) {
             print STDERR "Exporting to ${name}::${key}: $val\n";
         }
-        $ {"${name}::${key}"} = $val;
+        my $namespace = $name . '::' . $key;
+        $$namespace = $val;
+        push @state, $namespace;
     }
 
     ## dynamically create handler for buffered or unbuffered mode
@@ -386,6 +389,7 @@ sub fill {
     }
 
     ##
+    $self->{state} = \@state;
     $eval->(qq{ undef \$_OBUFFER; $self->{buff}; \$_OBUFFER; });
 }
 
@@ -415,6 +419,19 @@ sub include {
 }
 
 =back
+
+=item DESTROY
+
+Reset state.
+
+=cut
+sub DESTROY {
+    my $self = shift;
+    no strict 'refs';
+    for my $namespace (@{$self->{state}}) {
+        undef $$namespace;
+    }
+}
 
 =head1 TEMPLATE INTERNAL
 

@@ -6,6 +6,8 @@ ScriptTemplate.pm
 bin/benchmark.pl
 bin/dumpvar.pl
 t/20fopen.t
+t/60reset.t
+t/60reset.sub
 t/50include.t
 t/50include.sub
 t/30embed.t
